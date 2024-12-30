@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>New Year Clock</title>
+    <style>
+        
+    </style>
+</head>
+<body>
+    <div class="northern-lights">
+        <div class="aurora"></div>
+    </div>
+    <div class="background_image">
+        <div class="moon"></div>
+        <div class="dirt"></div>
+    </div>
+    <div class="snow" id="snow"></div>
+    <aside class="">
+        <div class="in_aside_nav">
+            <button class="button_aside_nav" onclick="open_nav()">
+                <p class="button_aside_nav_icon">\/</p>
+            </button>
+            <button class="button_aside_nav" onclick="toggleWeatherCard()">Погода</button>
+        </div>
+    </aside>
+    <div class="container">
+        <div class="card" id="card">
+            <div id="lights">
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+            </div>
+            <div class="time" id="time">00:00:00</div>
+            <div class="date" id="date">01 January 2024</div>
+        </div>
+    </div>
+    <div class="container weather-card hidden" id="weatherCard">
+        <div class="card">
+            <h2>Weather Forecast</h2>
+            <div id="weatherData">
+                <!-- Секції для прогнозу -->
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+    </div>
+
+    <script>
+
+        function toggleWeatherCard() {
+            const weatherCard = document.getElementById('weatherCard');
+            weatherCard.classList.toggle('hidden'); // Додає/видаляє клас 'hidden'
+        }
+        
+        const weatherCard = document.getElementById('weatherCard');
+        const resizeHandle = document.querySelector(".resize-handle");
+        
+        let isResizing = false;
+        let isDragging = false; // Стан перетягування
+        
+        // Подія для зміни розміру
+        resizeHandle.addEventListener("mousedown", (e) => {
+            isResizing = true;
+
+            // Початкова позиція
+            const startX = e.clientX;
+            const startY = e.clientY;
+
+            // Початкові розміри контейнера
+            const startWidth = parseInt(
+                document.defaultView.getComputedStyle(weatherCard).width,
+                10
+            );
+            const startHeight = parseInt(
+                document.defaultView.getComputedStyle(weatherCard).height,
+                10
+            );
+
+            // Обробка руху миші
+            function onMouseMove(e) {
+                if (!isResizing) return;
+
+                const currentWidth = startWidth + (e.clientX - startX);
+                const currentHeight = startHeight + (e.clientY - startY);
+
+                // Встановлюємо нові розміри (з урахуванням мінімальних значень)
+                weatherCard.style.width = `${Math.max(200, currentWidth)}px`;
+                weatherCard.style.height = `${Math.max(200, currentHeight)}px`; // Змінюємо висоту
+            
+                console.log("Current height:", currentHeight); // Вивід у консоль для перевірки
+            }
+
+            // Завершення зміни розміру
+            function onMouseUp() {
+                isResizing = false;
+                window.removeEventListener("mousemove", onMouseMove);
+                window.removeEventListener("mouseup", onMouseUp);
+            }
+
+            window.addEventListener("mousemove", onMouseMove);
+            window.addEventListener("mouseup", onMouseUp);
+        });
+
+        
+        // Функція перетягування
+        function enableDrag(element) {
+            let offsetX, offsetY;
+        
+            element.addEventListener('mousedown', (e) => {
+                // Якщо натиснуто на маркер для зміни розміру, не запускаємо перетягування
+                if (e.target === resizeHandle) return;
+        
+                isDragging = true;
+                offsetX = e.clientX - element.offsetLeft;
+                offsetY = e.clientY - element.offsetTop;
+                element.style.cursor = 'grabbing';
+            });
+        
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isResizing) { // Перетягування працює лише якщо не змінюємо розмір
+                    element.style.left = `${e.clientX - offsetX}px`;
+                    element.style.top = `${e.clientY - offsetY}px`;
+                }
+            });
+        
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                element.style.cursor = 'grab';
+            });
+        }
+        
+        // Активуємо перетягування для контейнера
+        enableDrag(weatherCard);
+
+
+
+        const weatherDataElement = document.getElementById("weatherData");
+        const apiKey = "5dc9339894214f95a9726b9545c046f6";
+        const lat = 50.2547; // Широта
+        const lon = 28.6587; // Довгота
+
+
+        async function fetchForecast() {
+            try {
+                const response = await fetch(
+                    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`
+                );
+        
+                if (!response.ok) {
+                    throw new Error("Не вдалося отримати дані про погоду.");
+                }
+        
+                const data = await response.json();
+                const today = new Date();
+                const todayStr = today.toISOString().split("T")[0];
+        
+                // **1. Прогноз на нинішній день (ранок, день, вечір, ніч)**
+                const todayForecasts = data.list.filter((item) =>
+                    item.dt_txt.startsWith(todayStr)
+                );
+        
+                const periods = {
+                    morning: todayForecasts.find((item) =>
+                        item.dt_txt.includes("06:00:00")
+                    ),
+                    day: todayForecasts.find((item) =>
+                        item.dt_txt.includes("12:00:00")
+                    ),
+                    evening: todayForecasts.find((item) =>
+                        item.dt_txt.includes("18:00:00")
+                    ),
+                    night: todayForecasts.find((item) =>
+                        item.dt_txt.includes("21:00:00")
+                    ),
+                };
+        
+                // Очищаємо контейнер
+                weatherDataElement.innerHTML = "";
+        
+                // Додаємо прогноз на нинішній день
+                const todaySection = document.createElement("div");
+                todaySection.className = "weather-section";
+        
+                const todayTitle = document.createElement("h3");
+                todayTitle.textContent = "Today's Weather";
+                weatherDataElement.appendChild(todayTitle);
+        
+                for (const [period, forecast] of Object.entries(periods)) {
+                    if (forecast) {
+                        const periodElement = document.createElement("div");
+                        periodElement.className = "weather-period";
+                        periodElement.innerHTML = `
+                            <h3>${period.charAt(0).toUpperCase() + period.slice(1)}</h3>
+                            <p>Temperature: ${forecast.main.temp}°C</p>
+                            <p>Weather: ${forecast.weather[0].description}</p>
+                            <p>Wind: ${forecast.wind.speed} m/s</p>
+                        `;
+                        todaySection.appendChild(periodElement);
+                    }
+                }
+                weatherDataElement.appendChild(todaySection);
+        
+                // **2. Прогноз на наступні 3 дні**
+                const forecastDays = [];
+                for (let i = 1; i <= 3; i++) {
+                    const day = new Date(today);
+                    day.setDate(today.getDate() + i);
+                    const dayStr = day.toISOString().split("T")[0];
+        
+                    const dailyForecast = data.list.filter((item) =>
+                        item.dt_txt.startsWith(dayStr)
+                    );
+        
+                    const noonForecast =
+                        dailyForecast.find((item) =>
+                            item.dt_txt.includes("12:00:00")
+                        ) || dailyForecast[0];
+        
+                    if (noonForecast) {
+                        forecastDays.push({
+                            date: dayStr,
+                            temp: noonForecast.main.temp,
+                            weather: noonForecast.weather[0].description,
+                            wind: noonForecast.wind.speed,
+                        });
+                    }
+                }
+        
+                const futureSection = document.createElement("div");
+                futureSection.className = "weather-section";
+        
+                const futureTitle = document.createElement("h3");
+                futureTitle.textContent = "3-Day Forecast";
+                weatherDataElement.appendChild(futureTitle);
+        
+                forecastDays.forEach((forecast) => {
+                    const dayElement = document.createElement("div");
+                    dayElement.className = "weather-day";
+                    dayElement.innerHTML = `
+                        <h3>${forecast.date}</h3>
+                        <p>Temperature: ${forecast.temp}°C</p>
+                        <p>Weather: ${forecast.weather}</p>
+                        <p>Wind: ${forecast.wind} m/s</p>
+                    `;
+                    futureSection.appendChild(dayElement);
+                });
+        
+                weatherDataElement.appendChild(futureSection);
+            } catch (error) {
+                console.error("Помилка:", error.message);
+            }
+        }
+
+        // Виклик функції
+        fetchForecast();
+        
+        // Ініціалізація перетягування для картки погоди
+        const weatherCardContainer = document.querySelector('.container.weather-card');
+        enableDrag(weatherCardContainer);
+
+        function open_nav() {
+            const in_aside_nav = document.querySelector('.in_aside_nav');
+            const button_aside_nav_icon = document.querySelector('.button_aside_nav_icon');
+        
+            if (in_aside_nav.classList.contains('active')) {
+                in_aside_nav.style.maxHeight = '80px'; // Мінімальний розмір кнопки
+                in_aside_nav.classList.remove('active');
+                button_aside_nav_icon.classList.remove('active');
+            } else {
+                in_aside_nav.style.maxHeight = '100%'; // Повна висота контейнера
+                in_aside_nav.classList.add('active');
+                button_aside_nav_icon.classList.add('active');
+            }
+        }
+
+        class Snowflake {
+            constructor(cardRect) {
+                this.size = Math.random() * 3 + 1; // Випадковий розмір сніжинки
+                this.x = Math.random() * window.innerWidth; // Початкова координата X
+                this.y = -Math.random() * window.innerHeight; // Початкова координата Y
+                this.speed = Math.random() * 2 + 0.5; // Швидкість падіння
+                this.opacity = Math.random();
+                this.isStopped = false; // Чи зупинилася сніжинка
+                this.cardRect = cardRect; // Збережені координати картки
+                this.disappearTime = null; // Час для зникнення
+                this.immunitide = false;
+            }
+        
+            // Перевірка на зупинку
+            checkCollision() {
+                if (this.immunitide == false) {
+                    
+                    // Перевіряємо, чи сніжинка потрапила на картку
+                    if (
+                        this.x > this.cardRect.left + 10 &&
+                        this.x < this.cardRect.right - 10 &&
+                        this.y + this.size > this.cardRect.top &&
+                        this.y < this.cardRect.bottom
+                    ) {
+                        const stopChance = 0.3; // 50% шанс
+                        const randomValue = Math.random();
+                        if (randomValue < stopChance) {
+                            this.isStopped = true; // Зупиняємо сніжинку
+                            this.disappearTime = Date.now() + 3000; // Час до зникнення
+                        }
+                        else {
+                            // Якщо сніжинка не зупиняється, робимо її імунною
+                            this.immunitide = true;
+                        }
+                        
+                    }
+                    
+                }
+                
+            }
+        
+            // Скидання позиції сніжинки
+            reset() {
+                this.isStopped = false;
+                this.immunitide = false;
+                this.x = Math.random() * window.innerWidth;
+                this.y = -Math.random() * window.innerHeight;
+                this.opacity = Math.random();
+            }
+        
+            // Оновлення позиції сніжинки
+            update() {
+                if (this.isStopped) {
+                    const remainingTime = this.disappearTime - Date.now();
+                    if (remainingTime <= 0) {
+                        this.reset();
+                    } else {
+                        this.opacity = remainingTime / 3000; // Поступове зникнення
+                    }
+                } else {
+                    this.y += this.speed;
+                    if (this.y > window.innerHeight) {
+                        this.reset(); // Повернення зверху
+                    } else {
+                        this.checkCollision();
+                    }
+                }
+            }
+        
+            // Малювання сніжинки
+            draw(ctx) {
+                ctx.save(); // Зберігаємо попередні налаштування контексту
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`; // Білий колір із заданою прозорістю
+                ctx.globalAlpha = 1; // Переконаємося, що прозорість відображається коректно
+                ctx.fill();
+                
+                ctx.restore(); // Відновлюємо попередні налаштування контексту
+            }
+        }
+        
+        // Ініціалізація сніжинок
+        function createSnowflakes(num, cardRect) {
+            const snowflakes = [];
+            for (let i = 0; i < num; i++) {
+                snowflakes.push(new Snowflake(cardRect));
+            }
+            return snowflakes;
+        }
+
+        // Основний цикл малювання
+        function drawSnowflakes(ctx, snowflakes) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            snowflakes.forEach((snowflake) => {
+                snowflake.update();
+                snowflake.draw(ctx);
+            });
+            requestAnimationFrame(() => drawSnowflakes(ctx, snowflakes));
+        }
+
+        // Canvas і картка
+        const canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        const card = document.querySelector('.card');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Збережені координати картки
+        const cardRect = card.getBoundingClientRect();
+
+        // Створення сніжинок
+        const snowflakes = createSnowflakes(300, cardRect);
+
+        // Запуск циклу малювання
+        requestAnimationFrame(() => drawSnowflakes(ctx, snowflakes));
+
+        // Оновлення часу і дати
+        function updateClockAndDate() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = monthNames[now.getMonth()];
+            const year = now.getFullYear();
+
+            document.getElementById('time').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('date').textContent = `${day} ${month} ${year}`;
+        }
+
+        // Ініціалізація
+        setInterval(updateClockAndDate, 1000);
+        updateClockAndDate();
+
+
+
+
+        let lastTime = 0; // Останній вимір часу
+        let frameCount = 0; // Кількість кадрів
+        let fpsDisplay = null; // Елемент для відображення FPS
+
+        function createFPSCounter() {
+            // Створюємо елемент для FPS
+            fpsDisplay = document.createElement('div');
+            fpsDisplay.style.position = 'fixed';
+            fpsDisplay.style.top = '10px';
+            fpsDisplay.style.right = '10px';
+            fpsDisplay.style.color = 'white';
+            fpsDisplay.style.background = 'rgba(0, 0, 0, 0.7)';
+            fpsDisplay.style.padding = '5px 10px';
+            fpsDisplay.style.borderRadius = '5px';
+            fpsDisplay.style.fontSize = '14px';
+            fpsDisplay.style.fontFamily = 'Arial, sans-serif';
+            fpsDisplay.textContent = 'FPS: 0';
+            document.body.appendChild(fpsDisplay);
+        }
+
+        function updateFPS(timestamp) {
+            if (!lastTime) {
+                lastTime = timestamp; // Початкова установка часу
+                requestAnimationFrame(updateFPS);
+                return;
+            }
+
+            frameCount++;
+            const delta = timestamp - lastTime;
+
+            if (delta >= 1000) {
+                const fps = Math.round((frameCount / delta) * 1000); // Розрахунок FPS
+                fpsDisplay.textContent = `FPS: ${fps}`;
+                frameCount = 0; // Скидаємо кількість кадрів
+                lastTime = timestamp; // Оновлюємо час
+            }
+
+            requestAnimationFrame(updateFPS); // Наступний кадр
+        }
+
+        // Ініціалізація FPS-лічильника
+        createFPSCounter();
+        requestAnimationFrame(updateFPS);
+
+        // Оновлення розміру canvas при зміні розміру вікна
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+    </script>
+</body>
+</html>
