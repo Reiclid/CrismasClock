@@ -433,7 +433,29 @@
         const cardRect = card.getBoundingClientRect();
 
         // Створення сніжинок
-        const snowflakes = createSnowflakes(300, cardRect);
+        // Функція для динамічного визначення кількості сніжинок
+        function calculateSnowflakeCount() {
+            const screenArea = window.innerWidth * window.innerHeight; // Обчислюємо площу екрану
+            const densityFactor = 0.0001; // Коефіцієнт щільності
+            return Math.max(50, Math.round(screenArea * densityFactor)); // Мінімум 50 сніжинок
+        }
+
+        // Ініціалізація сніжинок
+        const snowflakeCount = calculateSnowflakeCount();
+        const snowflakes = createSnowflakes(snowflakeCount, cardRect);
+
+        // Оновлення кількості сніжинок при зміні розміру вікна
+        window.addEventListener('resize', () => {
+            const newSnowflakeCount = calculateSnowflakeCount();
+
+            // Додаємо або видаляємо сніжинки залежно від нової кількості
+            if (newSnowflakeCount > snowflakes.length) {
+                const additionalSnowflakes = createSnowflakes(newSnowflakeCount - snowflakes.length, cardRect);
+                snowflakes.push(...additionalSnowflakes);
+            } else if (newSnowflakeCount < snowflakes.length) {
+                snowflakes.splice(newSnowflakeCount); // Видаляємо зайві сніжинки
+            }
+        });
 
         // Запуск циклу малювання
         requestAnimationFrame(() => drawSnowflakes(ctx, snowflakes));
