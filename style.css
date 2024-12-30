@@ -181,6 +181,10 @@ aside {
     transition: transform 0.3s; /* Перехід завжди активний */
 }
 
+.button_aside_nav > img {
+    filter: invert(100%);
+}
+
 .button_aside_nav_icon.active {
     transform: rotateZ(180deg);
 }
@@ -227,7 +231,7 @@ aside {
     left: 100px;
     /* height: auto; */
     min-height: 200px; /* Мінімальна висота */
-    min-width: 200px; /* Мінімальна ширина */
+    min-width: 302px; /* Мінімальна ширина */
     z-index: 2;
     cursor: grab;
     
@@ -240,6 +244,42 @@ aside {
 .weather-card > .card {
     min-width: 302px !important;
     overflow: hidden;
+    overflow-y: scroll;
+
+    scroll-behavior: smooth;
+}
+
+/* Стилізація скролу для Webkit-браузерів (Chrome, Edge, Safari) */
+.weather-card > .card::-webkit-scrollbar {
+    width: 8px; /* Ширина скролу */
+}
+
+.weather-card > .card::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.5); /* Колір скролу */
+    border-radius: 4px; /* Закруглені краї */
+    border: 2px solid transparent; /* Відступи */
+    background-clip: padding-box; /* Збереження прозорості */
+}
+
+.weather-card > .card::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.7); /* Колір при наведенні */
+}
+
+.weather-card > .card::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2); /* Фон треку */
+    border-radius: 4px;
+}
+
+/* Для Firefox */
+.weather-card > .card {
+    scrollbar-width: thin; /* Тонкий скрол */
+    scrollbar-color: rgba(255, 255, 255, 0.5) rgba(0, 0, 0, 0.2); /* Колір скролу та треку */
+}
+
+/* Для плавного відображення всіх */
+.weather-card > .card:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .weather-section {
@@ -433,7 +473,7 @@ aside {
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-@keyframes glow {
+/* @keyframes glow {
     0% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
                      0 0 40px rgba(0, 255, 255, 0.3); }
     50% { text-shadow: 0 0 30px rgba(255, 255, 255, 0.7),
@@ -441,7 +481,7 @@ aside {
                       0 0 80px rgba(0, 255, 255, 0.3); }
     100% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
                        0 0 40px rgba(0, 255, 255, 0.3); }
-}
+} */
 
 .northern-lights {
     position: fixed;

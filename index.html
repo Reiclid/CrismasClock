@@ -24,7 +24,9 @@
             <button class="button_aside_nav" onclick="open_nav()">
                 <p class="button_aside_nav_icon">\/</p>
             </button>
-            <button class="button_aside_nav" onclick="toggleWeatherCard()">Погода</button>
+            <button class="button_aside_nav" onclick="toggleWeatherCard()">
+                <img width="32" height="32" src="https://img.icons8.com/external-anggara-glyph-anggara-putra/32/external-weather-home-screen-anggara-glyph-anggara-putra.png" alt="external-weather-home-screen-anggara-glyph-anggara-putra"/>
+            </button>
         </div>
     </aside>
     <div class="container">
@@ -57,8 +59,8 @@
             <div id="weatherData">
                 <!-- Секції для прогнозу -->
             </div>
-            <div class="resize-handle"></div>
         </div>
+        <div class="resize-handle"></div>
     </div>
 
     <script>
@@ -325,24 +327,23 @@
                 this.size = Math.random() * 3 + 1; // Випадковий розмір сніжинки
                 this.x = Math.random() * window.innerWidth; // Початкова координата X
                 this.y = -Math.random() * window.innerHeight; // Початкова координата Y
-                this.speed = Math.random() * 2 + 0.5; // Швидкість падіння
+                this.speed = Math.random() * 1 + 0.5; // Швидкість падіння
                 this.opacity = Math.random();
                 this.isStopped = false; // Чи зупинилася сніжинка
-                this.cardRect = cardRect; // Збережені координати картки
                 this.disappearTime = null; // Час для зникнення
                 this.immunitide = false;
             }
         
             // Перевірка на зупинку
-            checkCollision() {
+            checkCollision(cardRect) {
                 if (this.immunitide == false) {
                     
                     // Перевіряємо, чи сніжинка потрапила на картку
                     if (
-                        this.x > this.cardRect.left + 10 &&
-                        this.x < this.cardRect.right - 10 &&
-                        this.y + this.size > this.cardRect.top &&
-                        this.y < this.cardRect.bottom
+                        this.x > cardRect.left + 10 &&
+                        this.x < cardRect.right - 10 &&
+                        this.y + this.size > cardRect.top &&
+                        this.y < cardRect.bottom
                     ) {
                         const stopChance = 0.3; // 50% шанс
                         const randomValue = Math.random();
@@ -372,6 +373,7 @@
         
             // Оновлення позиції сніжинки
             update() {
+                const cardRect = card.getBoundingClientRect();
                 if (this.isStopped) {
                     const remainingTime = this.disappearTime - Date.now();
                     if (remainingTime <= 0) {
@@ -384,7 +386,7 @@
                     if (this.y > window.innerHeight) {
                         this.reset(); // Повернення зверху
                     } else {
-                        this.checkCollision();
+                        this.checkCollision(cardRect);
                     }
                 }
             }
@@ -422,38 +424,40 @@
         }
 
         // Canvas і картка
-        //const canvas = document.createElement('canvas');
-        //document.body.appendChild(canvas);
-        //const ctx = canvas.getContext('2d');
-        //const card = document.querySelector('.card');
-        //canvas.width = window.innerWidth;
-        //canvas.height = window.innerHeight;
+        const canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        const card = document.querySelector('.card');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
         // Збережені координати картки
-        const cardRect = card.getBoundingClientRect();
+        let cardRect = card.getBoundingClientRect();
 
         // Створення сніжинок
         // Функція для динамічного визначення кількості сніжинок
         function calculateSnowflakeCount() {
             const screenArea = window.innerWidth * window.innerHeight; // Обчислюємо площу екрану
-            const densityFactor = 0.0001; // Коефіцієнт щільності
+            const densityFactor = 0.0002; // Коефіцієнт щільності
             return Math.max(50, Math.round(screenArea * densityFactor)); // Мінімум 50 сніжинок
         }
 
         // Ініціалізація сніжинок
-        //const snowflakeCount = calculateSnowflakeCount();
-        //const snowflakes = createSnowflakes(snowflakeCount, cardRect);
+        const snowflakeCount = calculateSnowflakeCount();
+        const snowflakes = createSnowflakes(snowflakeCount, cardRect);
 
         // Оновлення кількості сніжинок при зміні розміру вікна
         window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        
             const newSnowflakeCount = calculateSnowflakeCount();
-
-            // Додаємо або видаляємо сніжинки залежно від нової кількості
+        
             if (newSnowflakeCount > snowflakes.length) {
-                const additionalSnowflakes = createSnowflakes(newSnowflakeCount - snowflakes.length, cardRect);
+                const additionalSnowflakes = createSnowflakes(newSnowflakeCount - snowflakes.length);
                 snowflakes.push(...additionalSnowflakes);
             } else if (newSnowflakeCount < snowflakes.length) {
-                snowflakes.splice(newSnowflakeCount); // Видаляємо зайві сніжинки
+                snowflakes.splice(newSnowflakeCount);
             }
         });
 
@@ -547,6 +551,7 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            
         });
 
     </script>
