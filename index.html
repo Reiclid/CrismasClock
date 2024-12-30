@@ -130,6 +130,11 @@
         
         // Функція перетягування
         function enableDrag(element, handle) {
+            if (!element || !handle) {
+                //console.error('Елементи для перетягування не знайдено.');
+                return;
+            }
+
             let offsetX, offsetY;
             let isDragging = false;
 
