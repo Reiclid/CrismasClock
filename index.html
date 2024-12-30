@@ -54,6 +54,7 @@
         </div>
     </div>
     <div class="container weather-card hidden" id="weatherCard">
+        <div class="move-handle"></div>
         <div class="card">
             <h2>Weather Forecast</h2>
             <div id="weatherData">
@@ -64,6 +65,12 @@
     </div>
 
     <script>
+
+
+
+
+
+
 
         function toggleWeatherCard() {
             const weatherCard = document.getElementById('weatherCard');
@@ -125,61 +132,51 @@
 
         
         // Функція перетягування
-        function enableDrag(element) {
+        function enableDrag(element, handle) {
             let offsetX, offsetY;
             let isDragging = false;
-        
-            // Події миші
-            element.addEventListener('mousedown', (e) => {
-                // Якщо натиснуто на маркер для зміни розміру, не запускаємо перетягування
-                if (e.target === resizeHandle) return;
-        
+
+            // Події для початку перетягування
+            handle.addEventListener('mousedown', (e) => startDrag(e, false));
+            handle.addEventListener('touchstart', (e) => startDrag(e, true));
+
+            function startDrag(e, isTouch) {
                 isDragging = true;
-                offsetX = e.clientX - element.offsetLeft;
-                offsetY = e.clientY - element.offsetTop;
+                const startEvent = isTouch ? e.touches[0] : e;
+
+                offsetX = startEvent.clientX - element.offsetLeft;
+                offsetY = startEvent.clientY - element.offsetTop;
                 element.style.cursor = 'grabbing';
-            });
-        
-            document.addEventListener('mousemove', (e) => {
-                if (isDragging && !isResizing) { // Перетягування працює лише якщо не змінюємо розмір
-                    element.style.left = `${e.clientX - offsetX}px`;
-                    element.style.top = `${e.clientY - offsetY}px`;
-                }
-            });
-        
-            document.addEventListener('mouseup', () => {
+
+                // Додаємо слухачі для руху і завершення перетягування
+                window.addEventListener(isTouch ? 'touchmove' : 'mousemove', onMove);
+                window.addEventListener(isTouch ? 'touchend' : 'mouseup', stopDrag);
+            }
+
+            function onMove(e) {
+                if (!isDragging) return;
+
+                const moveEvent = e.touches ? e.touches[0] : e;
+
+                element.style.left = `${moveEvent.clientX - offsetX}px`;
+                element.style.top = `${moveEvent.clientY - offsetY}px`;
+            }
+
+            function stopDrag() {
                 isDragging = false;
                 element.style.cursor = 'grab';
-            });
-        
-            // Події для сенсорних пристроїв
-            element.addEventListener('touchstart', (e) => {
-                // Якщо натиснуто на маркер для зміни розміру, не запускаємо перетягування
-                if (e.target === resizeHandle) return;
-        
-                const touch = e.touches[0];
-                isDragging = true;
-                offsetX = touch.clientX - element.offsetLeft;
-                offsetY = touch.clientY - element.offsetTop;
-                element.style.cursor = 'grabbing';
-            });
-        
-            document.addEventListener('touchmove', (e) => {
-                if (isDragging && !isResizing) {
-                    const touch = e.touches[0];
-                    element.style.left = `${touch.clientX - offsetX}px`;
-                    element.style.top = `${touch.clientY - offsetY}px`;
-                }
-            });
-        
-            document.addEventListener('touchend', () => {
-                isDragging = false;
-                element.style.cursor = 'grab';
-            });
+
+                // Видаляємо слухачі
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', stopDrag);
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('touchend', stopDrag);
+            }
         }
         
         // Активуємо перетягування для контейнера
-        enableDrag(weatherCard);
+        const moveHandle = weatherCard.querySelector('.move-handle');
+        enableDrag(weatherCard, moveHandle);
 
 
 
@@ -427,7 +424,6 @@
         const canvas = document.createElement('canvas');
         document.body.appendChild(canvas);
         const ctx = canvas.getContext('2d');
-        const card = document.querySelector('.card');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
