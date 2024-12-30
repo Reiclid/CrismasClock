@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="style.css">
     <title>New Year Clock</title>
     <style>
@@ -74,12 +75,15 @@
         let isDragging = false; // Стан перетягування
         
         // Подія для зміни розміру
-        resizeHandle.addEventListener("mousedown", (e) => {
+        resizeHandle.addEventListener("mousedown", (e) => startResize(e, false));
+        resizeHandle.addEventListener("touchstart", (e) => startResize(e, true));
+
+        function startResize(e, isTouch) {
             isResizing = true;
 
             // Початкова позиція
-            const startX = e.clientX;
-            const startY = e.clientY;
+            const startX = isTouch ? e.touches[0].clientX : e.clientX;
+            const startY = isTouch ? e.touches[0].clientY : e.clientY;
 
             // Початкові розміри контейнера
             const startWidth = parseInt(
@@ -91,36 +95,39 @@
                 10
             );
 
-            // Обробка руху миші
-            function onMouseMove(e) {
+            function onMove(e) {
                 if (!isResizing) return;
 
-                const currentWidth = startWidth + (e.clientX - startX);
-                const currentHeight = startHeight + (e.clientY - startY);
+                const currentX = isTouch ? e.touches[0].clientX : e.clientX;
+                const currentY = isTouch ? e.touches[0].clientY : e.clientY;
+
+                const currentWidth = startWidth + (currentX - startX);
+                const currentHeight = startHeight + (currentY - startY);
 
                 // Встановлюємо нові розміри (з урахуванням мінімальних значень)
                 weatherCard.style.width = `${Math.max(200, currentWidth)}px`;
-                weatherCard.style.height = `${Math.max(200, currentHeight)}px`; // Змінюємо висоту
-            
+                weatherCard.style.height = `${Math.max(200, currentHeight)}px`;
+
                 console.log("Current height:", currentHeight); // Вивід у консоль для перевірки
             }
 
-            // Завершення зміни розміру
-            function onMouseUp() {
+            function stopResize() {
                 isResizing = false;
-                window.removeEventListener("mousemove", onMouseMove);
-                window.removeEventListener("mouseup", onMouseUp);
+                window.removeEventListener(isTouch ? "touchmove" : "mousemove", onMove);
+                window.removeEventListener(isTouch ? "touchend" : "mouseup", stopResize);
             }
 
-            window.addEventListener("mousemove", onMouseMove);
-            window.addEventListener("mouseup", onMouseUp);
-        });
+            window.addEventListener(isTouch ? "touchmove" : "mousemove", onMove);
+            window.addEventListener(isTouch ? "touchend" : "mouseup", stopResize);
+        }
 
         
         // Функція перетягування
         function enableDrag(element) {
             let offsetX, offsetY;
+            let isDragging = false;
         
+            // Події миші
             element.addEventListener('mousedown', (e) => {
                 // Якщо натиснуто на маркер для зміни розміру, не запускаємо перетягування
                 if (e.target === resizeHandle) return;
@@ -139,6 +146,31 @@
             });
         
             document.addEventListener('mouseup', () => {
+                isDragging = false;
+                element.style.cursor = 'grab';
+            });
+        
+            // Події для сенсорних пристроїв
+            element.addEventListener('touchstart', (e) => {
+                // Якщо натиснуто на маркер для зміни розміру, не запускаємо перетягування
+                if (e.target === resizeHandle) return;
+        
+                const touch = e.touches[0];
+                isDragging = true;
+                offsetX = touch.clientX - element.offsetLeft;
+                offsetY = touch.clientY - element.offsetTop;
+                element.style.cursor = 'grabbing';
+            });
+        
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging && !isResizing) {
+                    const touch = e.touches[0];
+                    element.style.left = `${touch.clientX - offsetX}px`;
+                    element.style.top = `${touch.clientY - offsetY}px`;
+                }
+            });
+        
+            document.addEventListener('touchend', () => {
                 isDragging = false;
                 element.style.cursor = 'grab';
             });
@@ -278,11 +310,11 @@
             const button_aside_nav_icon = document.querySelector('.button_aside_nav_icon');
         
             if (in_aside_nav.classList.contains('active')) {
-                in_aside_nav.style.maxHeight = '80px'; // Мінімальний розмір кнопки
+
                 in_aside_nav.classList.remove('active');
                 button_aside_nav_icon.classList.remove('active');
             } else {
-                in_aside_nav.style.maxHeight = '100%'; // Повна висота контейнера
+
                 in_aside_nav.classList.add('active');
                 button_aside_nav_icon.classList.add('active');
             }
