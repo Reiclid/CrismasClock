@@ -460,6 +460,12 @@
         // Запуск циклу малювання
         requestAnimationFrame(() => drawSnowflakes(ctx, snowflakes));
 
+
+
+
+
+
+
         // Оновлення часу і дати
         function updateClockAndDate() {
             const now = new Date();
@@ -478,14 +484,20 @@
 
             document.getElementById('time').textContent = `${hours}:${minutes}:${seconds}`;
             document.getElementById('date').textContent = `${day} ${month} ${year}`;
+        
+            requestAnimationFrame(updateClockAndDate);
         }
 
-        // Ініціалізація
-        setInterval(updateClockAndDate, 1000);
-        updateClockAndDate();
+        // Запускаємо оновлення годинника
+        requestAnimationFrame(updateClockAndDate);
 
 
 
+
+
+
+
+        
 
         let lastTime = 0; // Останній вимір часу
         let frameCount = 0; // Кількість кадрів
